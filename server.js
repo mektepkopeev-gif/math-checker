@@ -14,7 +14,7 @@ app.post('/api/check', async (req, res) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer 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'
+        'Authorization': 'Bearer GROQ_API_KEY'
       },
       body: JSON.stringify({
         model: 'meta-llama/llama-4-scout-17b-16e-instruct',
