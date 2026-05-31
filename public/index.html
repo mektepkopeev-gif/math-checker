@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#6366f1">
+<title>AI Math Checker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:16px}
+.app{max-width:480px;margin:0 auto}
+.header{text-align:center;padding:24px 0 16px}
+.header h1{font-size:24px;font-weight:700;color:white}
+.header h1 span{background:rgba(255,255,255,0.2);padding:2px 10px;border-radius:20px}
+.header p{font-size:13px;color:rgba(255,255,255,0.8);margin-top:6px}
+.card{background:white;border-radius:20px;padding:20px;margin-bottom:14px;box-shadow:0 4px 20px rgba(0,0,0,0.1)}
+.card h2{font-size:15px;font-weight:600;color:#374151;margin-bottom:14px}
+input[type=text]{width:100%;padding:12px 14px;border:2px solid #e5e7eb;border-radius:12px;font-size:15px;margin-bottom:10px;outline:none}
+input[type=text]:focus{border-color:#6366f1}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-upload{padding:20px 8px;border-radius:14px;border:2px dashed #d1d5db;font-size:13px;font-weight:600;cursor:pointer;background:#f9fafb;color:#6b7280;text-align:center}
+.btn-upload .icon{font-size:32px;display:block;margin-bottom:6px}
+.btn-check{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;width:100%;padding:16px;font-size:16px;font-weight:600;border-radius:14px;cursor:pointer;margin-top:14px;box-shadow:0 4px 12px rgba(99,102,241,0.4)}
+.btn-check:disabled{opacity:0.4;cursor:not-allowed;box-shadow:none}
+.preview-img{width:100%;border-radius:12px;margin-top:12px;display:none;max-height:250px;object-fit:contain}
+.hidden{display:none}
+.loading{text-align:center;padding:30px}
+.spinner{width:48px;height:48px;border:4px solid #e5e7eb;border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.task-item{padding:12px 14px;border-radius:12px;margin-bottom:10px}
+.task-correct{background:#f0fdf4;border-left:4px solid #22c55e}
+.task-wrong{background:#fff1f2;border-left:4px solid #f43f5e}
+.task-header{font-size:14px;font-weight:600}
+.task-correct .task-header{color:#15803d}
+.task-wrong .task-header{color:#be123c}
+.task-detail{font-size:13px;margin-top:6px;color:#6b7280;line-height:1.6}
+.grade-box{display:flex;align-items:center;gap:20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:16px;padding:20px}
+.grade-num{font-size:64px;font-weight:800;color:white;line-height:1}
+.grade-info{flex:1}
+.grade-pct{font-size:22px;font-weight:700;color:white}
+.grade-label{font-size:12px;color:rgba(255,255,255,0.8);margin-bottom:10px}
+.grade-btns{display:flex;gap:6px}
+.grade-btn{padding:6px 14px;border-radius:20px;border:2px solid rgba(255,255,255,0.4);cursor:pointer;background:transparent;color:white;font-weight:600;font-size:14px}
+.grade-btn.active{background:white;color:#6366f1;border-color:white}
+.analysis-box{background:#f8fafc;border-radius:12px;padding:14px;font-size:13px;color:#475569;line-height:1.8}
+.transcription-box{background:#f8fafc;border-radius:12px;padding:14px;font-size:14px;color:#1e293b;line-height:1.7;white-space:pre-wrap}
+.btn-next{background:white;color:#6366f1;border:2px solid #6366f1;width:100%;padding:14px;font-size:15px;font-weight:600;border-radius:14px;cursor:pointer;margin-top:4px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>🧮 <span>AI Math Checker</span></h1>
+    <p>Бастауыш сынып мұғалімдері үшін</p>
+  </div>
+
+  <div id="step1">
+    <div class="card">
+      <h2>👤 Оқушы туралы</h2>
+      <input type="text" id="studentName" placeholder="Оқушының аты-жөні" />
+      <input type="text" id="studentClass" placeholder="Сынып (мысалы: 2А)" />
+    </div>
+    <div class="card">
+      <h2>📷 Жұмысты жүктеу</h2>
+      <div class="btn-row">
+        <button class="btn-upload" onclick="document.getElementById('camera').click()">
+          <span class="icon">📸</span>Суретке түсіру
+        </button>
+        <button class="btn-upload" onclick="document.getElementById('gallery').click()">
+          <span class="icon">🖼️</span>Фото жүктеу
+        </button>
+      </div>
+      <input type="file" id="camera" accept="image/*" capture="environment" class="hidden" onchange="loadImage(event)" />
+      <input type="file" id="gallery" accept="image/*" class="hidden" onchange="loadImage(event)" />
+      <img id="previewImg" class="preview-img" alt="preview" />
+      <button class="btn-check" id="checkBtn" onclick="checkWork()" disabled>✅ Жұмысты тексеру</button>
+    </div>
+  </div>
+
+  <div id="step2" class="hidden">
+    <div class="card loading">
+      <div class="spinner"></div>
+      <p style="color:#6b7280">AI тексеруде...</p>
+      <p style="font-size:12px;margin-top:6px;color:#9ca3af">Бірнеше секунд күтіңіз</p>
+    </div>
+  </div>
+
+  <div id="step3" class="hidden">
+    <div class="card">
+      <h2>📝 Жазбаны тану</h2>
+      <div class="transcription-box" id="transcription"></div>
+    </div>
+    <div class="card">
+      <h2>✔️ Есептерді тексеру</h2>
+      <div id="tasks"></div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="grade-box">
+        <div class="grade-num" id="gradeNum">5</div>
+        <div class="grade-info">
+          <div class="grade-label">Дұрыс орындалған</div>
+          <div class="grade-pct" id="gradePct">0/0</div>
+          <div class="grade-btns">
+            <button class="grade-btn" onclick="setGrade(2)">2</button>
+            <button class="grade-btn" onclick="setGrade(3)">3</button>
+            <button class="grade-btn" onclick="setGrade(4)">4</button>
+            <button class="grade-btn active" onclick="setGrade(5)">5</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>💬 Талдау</h2>
+      <div class="analysis-box" id="analysis"></div>
+    </div>
+    <button class="btn-next" onclick="reset()">➡️ Келесі жұмысты тексеру</button>
+  </div>
+</div>
+
+<script>
+let imgBase64=null;
+function loadImage(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    imgBase64=ev.target.result.split(',')[1];
+    const img=document.getElementById('previewImg');
+    img.src=ev.target.result;
+    img.style.display='block';
+    document.getElementById('checkBtn').disabled=false;
+  };
+  reader.readAsDataURL(file);
+  e.target.value='';
+}
+function setStep(n){
+  ['step1','step2','step3'].forEach((id,i)=>{
+    document.getElementById(id).classList.toggle('hidden',i+1!==n);
+  });
+}
+function setGrade(g){
+  document.getElementById('gradeNum').textContent=g;
+  document.querySelectorAll('.grade-btn').forEach(b=>{
+    b.classList.toggle('active',parseInt(b.textContent)===g);
+  });
+}
+function calcGrade(correct,total){
+  if(total===0)return 5;
+  const pct=(correct/total)*100;
+  if(pct===100)return 5;
+  if(pct>=75)return 4;
+  if(pct>=50)return 3;
+  return 2;
+}
+async function checkWork(){
+  if(!imgBase64)return;
+  setStep(2);
+  const name=document.getElementById('studentName').value;
+  const cls=document.getElementById('studentClass').value;
+  try{
+    const res=await fetch('/api/check',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({image:imgBase64,studentName:name,studentClass:cls})
+    });
+    const data=await res.json();
+    showResult(data);
+  }catch(err){
+    alert('Қате: '+err.message);
+    setStep(1);
+  }
+}
+function showResult(r){
+  document.getElementById('transcription').textContent=r.transcription||'—';
+  const tasks=document.getElementById('tasks');
+  tasks.innerHTML='';
+  (r.tasks||[]).forEach(t=>{
+    const div=document.createElement('div');
+    div.className='task-item '+(t.is_correct?'task-correct':'task-wrong');
+    div.innerHTML=`<div class="task-header">${t.is_correct?'✅':'❌'} ${t.task}</div>
+    <div class="task-detail">Оқушы: <strong>${t.student_answer}</strong>${!t.is_correct?` → Дұрысы: <strong>${t.correct_answer}</strong>`:''}<br>${t.explanation||''}</div>`;
+    tasks.appendChild(div);
+  });
+  const correct=r.correct_count||0;
+  const total=r.total_count||0;
+  const pct=total>0?Math.round(correct/total*100):0;
+  document.getElementById('gradePct').textContent=`${correct}/${total} (${pct}%)`;
+  const autoGrade=calcGrade(correct,total);
+  setGrade(autoGrade);
+  document.getElementById('analysis').textContent=r.analysis||'—';
+  setStep(3);
+}
+function reset(){
+  imgBase64=null;
+  document.getElementById('studentName').value='';
+  document.getElementById('studentClass').value='';
+  document.getElementById('previewImg').style.display='none';
+  document.getElementById('checkBtn').disabled=true;
+  setStep(1);
+}
+</script>
+</body>
+</html>
